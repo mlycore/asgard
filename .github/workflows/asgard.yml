@@ -1,0 +1,30 @@
+name: Asgard CICD
+# This workflow is triggered on pushes to the repository.
+on: push
+
+jobs:
+  build:
+    name: Go and Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - name: "setup go"
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.12'
+      - name: "go build"
+        run: mkdir -p bin; go mod tidy; go build -o bin/kubestar ./pkg
+      - name: Login to ECR
+        id: ecr
+        uses: mlycore/ecr-login-action@master
+        with:
+          access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+      - name: Publish to Registry
+        uses: mlycore/Publish-Docker-Github-Action@master
+        with:
+          name: 847553930390.dkr.ecr.ap-northeast-1.amazonaws.com/asgard
+          dockerfile: build/Dockerfile
+          username: ${{ steps.ecr.outputs.username }}
+          password: ${{ steps.ecr.outputs.password }}
+          registry: ${{ steps.ecr.outputs.registry }}
