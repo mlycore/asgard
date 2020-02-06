@@ -8,3 +8,5 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/viper v1.6.2
 )
+
+replace github.com/xuyun-io/asgard => /Users/maxwell/vscode/asgard
