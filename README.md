@@ -1,4 +1,3 @@
-[![GPL License][license-image]][license-url]
 [![Go Report Card](https://goreportcard.com/badge/github.com/mlycore/asgard)](https://goreportcard.com/report/github.com/mlycore/asgard)
 
 # Asgard
