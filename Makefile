@@ -1,15 +1,12 @@
 shell := bash
 
-deps:
-	dep ensure
-
 build:
-	go build -o ./out/nexus-minimal ./internal
+	go build -o ./out/asgard ./pkg
 
 run:
 	make build
-	./out/nexus-minimal
+	./out/asgard
 
 registry:
-	docker build -f ./deployments/Dockerfile . -t astma/nexus-minimal:latest
-	docker push astma/nexus-minimal:latest
+	docker build -f ./deployments/Dockerfile . -t mworks92/asgard:latest
+	docker push mworks92/asgard:latest
