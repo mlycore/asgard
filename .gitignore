@@ -13,7 +13,6 @@
 *.out
 out/
 config.yml
-vendor/
 
 .idea
 bin
