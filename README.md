@@ -1,20 +1,19 @@
-[![MIT License][license-image]][license-url]
-[![Build Status](https://travis-ci.org/Atsman/nexus-minimal.svg?branch=master)](https://travis-ci.org/Atsman/nexus-minimal)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Atsman/nexus-minimal)](https://goreportcard.com/report/github.com/Atsman/nexus-minimal)
+[![GPL License][license-image]][license-url]
+[![Go Report Card](https://goreportcard.com/badge/github.com/Atsman/nexus-minimal)](https://goreportcard.com/report/github.com/mlycore/asgard)
 
-# Nexus Minimal (aka Lil Nexus)
+# Asgard
 
-Nexus minimal is an implementation of nexus repo in golang. Decision to implement new tiny repo come to me when i realized that nexus requires 4gb RAM machine at minimum. Check the [Nexus memory requrements](https://help.sonatype.com/display/NXRM3/System+Requirements#SystemRequirements-Memory). That is too much, especially when you need it only for small personal projects. This project gives you minimal, but complete nexus functionality, with ability to save artifacts on filesystem or to s3 and basic auth. For most of usecases that is more than enought.
+Asgard is an implementation of artifacts repository in golang. Decision to implement new tiny repo come to me when i realized that nexus requires 4gb RAM machine at minimum. Check the [Nexus memory requrements](https://help.sonatype.com/display/NXRM3/System+Requirements#SystemRequirements-Memory). That is too much, especially when you need it only for small personal projects. This project gives you minimal, but complete nexus functionality, with ability to save artifacts on filesystem or to s3 and basic auth. For most of usecases that is more than enought.
 
 ## How to use it ?
 
 ```
-docker run -d -v /etc/nexus-minimal:/etc/nexus-minimal -p 8080:8080 astma/nexus-minimal
+docker run -d -v ${HOME}/config.yml:/config.yml -p 8080:8080 mworks92/asgard
 ```
 
 ## Configuration 
 
-Create config.yml in /etc/nexus-minimal or in the same directory where you run binary.
+Create config.yml in your ${HOME} directory or in the same directory where you run binary.
 
 For s3:
 ```yml
@@ -29,7 +28,7 @@ http:
 
 storage:
   type: "s3"
-  bucket_name: "my-super-nexus-bucket"
+  bucket_name: "asgardtest"
   access_key: "*******************"
   secret_key: "**************************************"
 ```
@@ -44,7 +43,7 @@ http:
 
 storage:
   type: "fs"
-  base_dir: "/tmp/nexus-minimal"
+  base_dir: "/applications"
 ```
 
 ## How to build it ?
@@ -69,7 +68,7 @@ And it will run app locally on port 8080 by default.
 
 ## License
 
-[MIT](LICENSE)
+[GPL](LICENSE)
 
 [license-url]: LICENSE
 
