@@ -10,5 +10,5 @@ run:
 	./bin/asgard
 
 registry:
-	docker build -f ./deployments/Dockerfile . -t mworks92/asgard:latest
+	docker build -f ./build/Dockerfile . -t mworks92/asgard:latest
 	docker push mworks92/asgard:latest
