@@ -32,9 +32,9 @@ type HttpConfig struct {
 type StorageConfig struct {
 	Type string
 
-	Bucket    string
-	AccessKey string
-	SecretKey string
+	BucketName string
+	AccessKey  string
+	SecretKey  string
 
 	BaseDir string
 }
@@ -61,13 +61,13 @@ func NewConfig() Config {
 	config.HTTP.Password = viper.GetString("http.password")
 
 	config.Storage.Type = viper.GetString("storage.type")
-	config.Storage.Bucket = viper.GetString("storage.bucket")
+	config.Storage.BucketName = viper.GetString("storage.bucket_name")
 	config.Storage.AccessKey = viper.GetString("storage.access_key")
 	config.Storage.SecretKey = viper.GetString("storage.secret_key")
 
 	config.Storage.BaseDir = viper.GetString("storage.base_dir")
 	if config.Storage.BaseDir == "" {
-		config.Storage.BaseDir = "./.nexus"
+		config.Storage.BaseDir = "./.applications"
 	}
 
 	return config

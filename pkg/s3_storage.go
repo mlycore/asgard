@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,12 +20,12 @@ type S3Storage struct {
 }
 
 func NewS3Storage(config StorageConfig) *S3Storage {
+	fmt.Printf("%+v\n", config)
 	sess := session.Must(session.NewSession())
 	creds := credentials.NewStaticCredentials(config.AccessKey, config.SecretKey, "")
 	awsOptions := &aws.Config{
 		Credentials: creds,
 		Region:      aws.String(endpoints.ApNortheast1RegionID),
-		// Region: aws.String("ap-northeast-1"),
 	}
 	svc := s3.New(sess, awsOptions)
 
@@ -42,7 +43,7 @@ func NewS3Storage(config StorageConfig) *S3Storage {
 func (s *S3Storage) ReadFile(path string) (io.ReadCloser, error) {
 	ctx := context.Background()
 	result, err := s.S3Client.GetObjectWithContext(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(s.Config.Bucket),
+		Bucket: aws.String(s.Config.BucketName),
 		Key:    aws.String(path),
 	})
 	if err != nil {
@@ -53,7 +54,7 @@ func (s *S3Storage) ReadFile(path string) (io.ReadCloser, error) {
 
 func (s *S3Storage) WriteFile(path string, file io.ReadCloser) error {
 	upParams := &s3manager.UploadInput{
-		Bucket: aws.String(s.Config.Bucket),
+		Bucket: aws.String(s.Config.BucketName),
 		Key:    aws.String(path),
 		Body:   file,
 	}

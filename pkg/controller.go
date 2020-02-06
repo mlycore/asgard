@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -26,17 +27,34 @@ func (ctrl *FileController) GetFile(w http.ResponseWriter, r *http.Request, ps h
 	file, err := ctrl.Storage.ReadFile(filepath)
 	if err != nil {
 		w.WriteHeader(404)
-		fmt.Fprint(w, "Error during file opening, %", err.Error())
+		fmt.Fprint(w, "Error during file opening, %s", err.Error())
 		return
 	}
 	defer file.Close()
 
+	/*
 	_, err = io.Copy(w, file)
 	if err != nil {
 		w.WriteHeader(404)
 		fmt.Fprintf(w, "Error during writing to file")
 		return
 	}
+	 */
+
+	content, err := ioutil.ReadAll(file)
+	fileNames := url.QueryEscape(filepath) // In case of Chinese wrong code
+	w.Header().Add("Content-Type", "application/octet-stream")
+	segs := strings.Split(fileNames, "/")
+	downloadFileName := segs[len(segs)-1]
+	w.Header().Add("Content-Disposition", "attachment; filename=\""+downloadFileName+"\"")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Errorf("server error: %s", err)
+		return
+	}
+
+	w.Write(content)
+	log.Infof("file %s downloaded!", downloadFileName)
 }
 
 func (ctrl *FileController) PutFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
