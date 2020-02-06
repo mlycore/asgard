@@ -7,6 +7,10 @@ jobs:
     name: Go and Docker build
     runs-on: ubuntu-latest
     steps:
+      - name: "checkout go"
+        uses: actions/checkout@master
+      - name: "manifest"
+        run:  echo `git log | grep commit | head -1 | cut -d" " -f2` > manifest
       - name: "setup go"
         uses: actions/setup-go@v1
         with:
