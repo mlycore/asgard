@@ -12,9 +12,8 @@
 
 FROM golang:1.12.10
 EXPOSE 8080
-COPY ui/dist /ui/dist
 COPY manifest /manifest
-COPY build/server/Dockerfile /Dockerfile
+COPY build/Dockerfile /Dockerfile
 COPY bin/asgard /asgard
 RUN cp /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
 WORKDIR /
