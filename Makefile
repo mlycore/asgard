@@ -1,11 +1,13 @@
 shell := bash
 
+clean:
+	rm ./bin/asgard
+
 build:
-	go build -o ./out/asgard ./pkg
+	go build -o ./bin/asgard ./pkg
 
 run:
-	make build
-	./out/asgard
+	./bin/asgard
 
 registry:
 	docker build -f ./deployments/Dockerfile . -t mworks92/asgard:latest
