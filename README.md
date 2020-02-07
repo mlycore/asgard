@@ -4,13 +4,29 @@
 
 Asgard is an implementation of artifacts repository in golang. Decision to implement new tiny repo come to me when i realized that nexus requires 4gb RAM machine at minimum. Check the [Nexus memory requrements](https://help.sonatype.com/display/NXRM3/System+Requirements#SystemRequirements-Memory). That is too much, especially when you need it only for small personal projects. This project gives you minimal, but complete nexus functionality, with ability to save artifacts on filesystem or to s3 and basic auth. For most of usecases that is more than enought.
 
-## How to use it ?
+
+## How to build it ?
+
+Make sure to install golang, set all env variables etc.
+Clone project to your go-workspace.
+Cd to the project folder and run:
 
 ```
-docker run -d -v ${HOME}/config.yml:/config.yml -p 8080:8080 mworks92/asgard
+make build
 ```
 
-## Configuration 
+And it will compile app.
+
+Run:
+
+```
+make run
+```
+
+And it will run app locally on port 8080 by default.
+
+
+## How to configure it ? 
 
 Create config.yml in your ${HOME} directory or in the same directory where you run binary.
 
@@ -45,25 +61,25 @@ storage:
   base_dir: "/applications"
 ```
 
-## How to build it ?
+## How to use it ?
 
-Make sure to install golang, set all env variables etc.
-Clone project to your go-workspace.
-Cd to the project folder and run:
+### Get / Download one specific file
 
 ```
-make build
+# raw content
+curl --user myuser:mypassword localhost:8080/dir/foo.json
+
+# file download
+curl --user myuser:mypassword localhost:8080/dir/foo.json -o foo.json
+# or
+wget --user myuser --password mypassword localhost:8080/dir/foo.json
 ```
 
-And it will compile app.
-
-Run:
+### Upload
 
 ```
-make run
+curl --user myuser:mypassword --upload-file foo.json localhost:8080/dir/foo.json
 ```
-
-And it will run app locally on port 8080 by default.
 
 ## License
 
