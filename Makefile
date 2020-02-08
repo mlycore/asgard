@@ -3,6 +3,7 @@ shell := bash
 clean:
 	rm ./bin/asgard
 
+.PHONY: build
 build:
 	go build -o ./bin/asgard ./pkg
 
