@@ -146,3 +146,16 @@ func (s *S3Storage) GetObjectKey(key string) string {
 
 	return key
 }
+
+func (s *S3Storage)DeleteFile(file string) error {
+	params := &s3.DeleteObjectInput{
+		Bucket: aws.String( "asgardtest"),
+		Key:    aws.String(file),
+	}
+	_, err := s.S3Client.DeleteObject(params)
+	return err
+}
+
+func (s *S3Storage)Copy(src, dst string, recursive bool) error {
+	return nil
+}

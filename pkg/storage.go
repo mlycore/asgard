@@ -11,6 +11,8 @@ type Storage interface {
 	ListDirectory(path string) ([]Object, error)
 	GetObjectSize(path string) int64
 	GetObjectKey(path string) string
+	DeleteFile(path string) error
+	Copy(src, dst string, recursive bool) error
 }
 
 type StorageType string

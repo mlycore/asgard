@@ -47,6 +47,14 @@ func (fs *FileSystemStorage) GetObjectKey(path string) string {
 	return ""
 }
 
+func (fs *FileSystemStorage)DeleteFile(file string) error  {
+	return nil	
+}
+
+func (fs *FileSystemStorage)Copy(src, dst string, recursive bool)  error {
+	return nil
+}
+
 func resolvePath(basedir string, filepath string) string {
 	return path.Join(basedir, filepath)
 }

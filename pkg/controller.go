@@ -138,3 +138,16 @@ func (ctrl *FileController) PutFile(w http.ResponseWriter, r *http.Request, ps h
 	}
 	w.WriteHeader(200)
 }
+
+func (ctrl *FileController) DeleteFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	filepath := ps.ByName("filepath")
+	log.Infof("DeleteFile, filepath: %s\n", filepath)
+	err := ctrl.Storage.DeleteFile(filepath)
+	if err != nil {
+		log.Errorf("Error during file deleting: %s", err.Error())
+		w.WriteHeader(500)
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+	w.WriteHeader(200)
+}
