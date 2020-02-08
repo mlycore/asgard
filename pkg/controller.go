@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 
 	"github.com/julienschmidt/httprouter"
@@ -28,6 +29,7 @@ func check(s Storage, filepath string) (bool, error) {
 	// 1. single file will be considered if there is no key of this filepath ?
 	// 2. single file with key of this filepath but size 0 at the meanwhile ?
 	// 3. single file with key of this filepath but size 0 and no suffix of .7z ?
+	// 4. single file end up with /
 
 	// using principle 3
 	if strings.EqualFold(s.GetObjectKey(filepath), "") {
@@ -35,7 +37,12 @@ func check(s Storage, filepath string) (bool, error) {
 	}
 
 	// it's directory
+	/*
 	if  0 == s.GetObjectSize(filepath) && 1 == len(strings.Split(filepath, ".")) {
+		return true, nil
+	}
+	 */
+	if strings.HasSuffix(filepath, "/") {
 		return true, nil
 	}
 
@@ -45,7 +52,13 @@ func check(s Storage, filepath string) (bool, error) {
 
 func (ctrl *FileController) GetFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	filepath := ps.ByName("filepath")
-	// TODO: get or list will be determinded by filepath
+	if strings.EqualFold(filepath, "/") {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "liveness get %d goroutines", runtime.NumGoroutine())
+		return
+	}
+
+	// get or list will be determinded by filepath
 	directory, err :=  check(ctrl.Storage, filepath)
 	log.Infof("directory=%v, err=%s", directory, err)
 	if err != nil {

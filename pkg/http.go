@@ -24,6 +24,7 @@ func InitHttp(config HttpConfig, controller *FileController) {
 	router := httprouter.New()
 	router.GET("/*filepath", BasicAuth(controller.GetFile, config))
 	router.POST("/*filepath", BasicAuth(controller.PutFile, config))
+	// router.GET("/healthz", controller.Healthz)
 	// TODO: add list and delete, even search with name or tags / properties
 	// router.GET("/*")
 	// router.DELETE("/)
