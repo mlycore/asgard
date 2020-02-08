@@ -38,10 +38,10 @@ func check(s Storage, filepath string) (bool, error) {
 
 	// it's directory
 	/*
-	if  0 == s.GetObjectSize(filepath) && 1 == len(strings.Split(filepath, ".")) {
-		return true, nil
-	}
-	 */
+		if  0 == s.GetObjectSize(filepath) && 1 == len(strings.Split(filepath, ".")) {
+			return true, nil
+		}
+	*/
 	if strings.HasSuffix(filepath, "/") {
 		return true, nil
 	}
@@ -59,7 +59,7 @@ func (ctrl *FileController) GetFile(w http.ResponseWriter, r *http.Request, ps h
 	}
 
 	// get or list will be determinded by filepath
-	directory, err :=  check(ctrl.Storage, filepath)
+	directory, err := check(ctrl.Storage, filepath)
 	log.Infof("directory=%v, err=%s", directory, err)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -117,20 +117,13 @@ func (ctrl *FileController) GetFile(w http.ResponseWriter, r *http.Request, ps h
 	}
 
 	/*
-
-
-	 */
-
-	/*
-	_, err = io.Copy(w, file)
-	if err != nil {
-		w.WriteHeader(404)
-		fmt.Fprintf(w, "Error during writing to file")
-		return
-	}
-	 */
-
-
+		_, err = io.Copy(w, file)
+		if err != nil {
+			w.WriteHeader(404)
+			fmt.Fprintf(w, "Error during writing to file")
+			return
+		}
+	*/
 }
 
 func (ctrl *FileController) PutFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -145,11 +138,3 @@ func (ctrl *FileController) PutFile(w http.ResponseWriter, r *http.Request, ps h
 	}
 	w.WriteHeader(200)
 }
-
-/*
-func (ctrl *FileController)ListDirectory(w http.ResponseWriter, r *http.Request, ps httprouter.Params)  {
-	path := ps.ByName("filepath")
-	// TODO: need to check if it is a directory
-	err := ctrl.Storage.ListDirectory(path)
-}
- */

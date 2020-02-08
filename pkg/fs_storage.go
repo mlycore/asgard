@@ -35,15 +35,15 @@ func (fs *FileSystemStorage) WriteFile(path string, file io.ReadCloser) error {
 	return err
 }
 
-func (fs *FileSystemStorage)ListDirectory(path string)([]Object, error)  {
+func (fs *FileSystemStorage) ListDirectory(path string) ([]Object, error) {
 	return nil, nil
 }
 
-func (fs *FileSystemStorage)GetObjectSize(path string) int64  {
+func (fs *FileSystemStorage) GetObjectSize(path string) int64 {
 	return 0
 }
 
-func (fs *FileSystemStorage)GetObjectKey(path string) string {
+func (fs *FileSystemStorage) GetObjectKey(path string) string {
 	return ""
 }
 

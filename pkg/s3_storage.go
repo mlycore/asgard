@@ -64,30 +64,32 @@ func (s *S3Storage) WriteFile(path string, file io.ReadCloser) error {
 	_, err := s.S3Uploader.Upload(upParams)
 	return err
 }
+
 var _ Object = &S3Object{}
-type S3Object struct{
+
+type S3Object struct {
 	// object *s3.Object
-	Key *string `json:"key,omitempty"`
+	Key          *string    `json:"key,omitempty"`
 	LastModified *time.Time `json:"lastModified,omitempty"`
-	Size *int64 `json:"size,omitempty"`
+	Size         *int64     `json:"size,omitempty"`
 	// StorageClass *string `json:"storageClass,omitempty"`
 }
 
-func (obj *S3Object)GetKey() string  {
+func (obj *S3Object) GetKey() string {
 	return aws.StringValue(obj.Key)
 }
 
-func (obj *S3Object)GetLastModified() time.Time  {
+func (obj *S3Object) GetLastModified() time.Time {
 	return aws.TimeValue(obj.LastModified)
 }
 
-func (obj *S3Object)GetSize() int64  {
+func (obj *S3Object) GetSize() int64 {
 	return aws.Int64Value(obj.Size)
 }
 
-func (s *S3Storage)ListDirectory(path string) ([]Object, error) {
+func (s *S3Storage) ListDirectory(path string) ([]Object, error) {
 	params := &s3.ListObjectsInput{
-		Bucket:     aws.String( "asgardtest"),
+		Bucket: aws.String("asgardtest"),
 	}
 
 	result, err := s.S3Client.ListObjects(params)
@@ -96,31 +98,31 @@ func (s *S3Storage)ListDirectory(path string) ([]Object, error) {
 	}
 
 	list := make([]Object, len(result.Contents))
-	for i := 0; i < len(result.Contents); i ++ {
+	for i := 0; i < len(result.Contents); i++ {
 		realkey := strings.TrimPrefix(aws.StringValue(result.Contents[i].Key), strings.TrimPrefix(path, "/"))
 		if strings.EqualFold(realkey, "") {
 			realkey = "."
 		}
 		/*
-		if strings.EqualFold(strings.Trim(aws.StringValue(result.Contents[i].Key), "/"), strings.Trim(path, "/")) {
-			realkey = "./"
-		}
-		 */
+			if strings.EqualFold(strings.Trim(aws.StringValue(result.Contents[i].Key), "/"), strings.Trim(path, "/")) {
+				realkey = "./"
+			}
+		*/
 		list[i] = &S3Object{
 			//object: result.Contents[i],
-			Key: aws.String(realkey),
+			Key:          aws.String(realkey),
 			LastModified: result.Contents[i].LastModified,
-			Size: result.Contents[i].Size,
+			Size:         result.Contents[i].Size,
 		}
 	}
 
 	return list, nil
 }
 
-func (s *S3Storage)GetObjectSize(key string) int64 {
+func (s *S3Storage) GetObjectSize(key string) int64 {
 	params := &s3.GetObjectInput{
-		Bucket:  aws.String("asgardtest"),
-		Key: aws.String(key),
+		Bucket: aws.String("asgardtest"),
+		Key:    aws.String(key),
 	}
 
 	output, err := s.S3Client.GetObject(params)
@@ -131,10 +133,10 @@ func (s *S3Storage)GetObjectSize(key string) int64 {
 	return aws.Int64Value(output.ContentLength)
 }
 
-func(s *S3Storage)GetObjectKey(key string) string {
+func (s *S3Storage) GetObjectKey(key string) string {
 	params := &s3.GetObjectInput{
-		Bucket:  aws.String("asgardtest"),
-		Key: aws.String(key),
+		Bucket: aws.String("asgardtest"),
+		Key:    aws.String(key),
 	}
 
 	_, err := s.S3Client.GetObject(params)

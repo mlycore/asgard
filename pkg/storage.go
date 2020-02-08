@@ -8,7 +8,7 @@ import (
 type Storage interface {
 	ReadFile(path string) (io.ReadCloser, error)
 	WriteFile(path string, file io.ReadCloser) error
-	ListDirectory(path string)([]Object, error)
+	ListDirectory(path string) ([]Object, error)
 	GetObjectSize(path string) int64
 	GetObjectKey(path string) string
 }
@@ -31,9 +31,9 @@ func NewStorage(config StorageConfig) Storage {
 	}
 }
 
-type Object interface{
+type Object interface {
 	GetKey() string
 	GetLastModified() time.Time
 	GetSize() int64
-//	StorageClass() string
+	//	StorageClass() string
 }
