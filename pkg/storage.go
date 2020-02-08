@@ -2,11 +2,15 @@ package main
 
 import (
 	"io"
+	"time"
 )
 
 type Storage interface {
 	ReadFile(path string) (io.ReadCloser, error)
 	WriteFile(path string, file io.ReadCloser) error
+	ListDirectory(path string)([]Object, error)
+	GetObjectSize(path string) int64
+	GetObjectKey(path string) string
 }
 
 type StorageType string
@@ -25,4 +29,11 @@ func NewStorage(config StorageConfig) Storage {
 	default:
 		panic("Unknown storage type")
 	}
+}
+
+type Object interface{
+	GetKey() string
+	GetLastModified() time.Time
+	GetSize() int64
+//	StorageClass() string
 }

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -21,16 +23,90 @@ func NewFileController(storage Storage) *FileController {
 	}
 }
 
+func check(s Storage, filepath string) (bool, error) {
+	// Principle:
+	// 1. single file will be considered if there is no key of this filepath ?
+	// 2. single file with key of this filepath but size 0 at the meanwhile ?
+	// 3. single file with key of this filepath but size 0 and no suffix of .7z ?
+
+	// using principle 3
+	if strings.EqualFold(s.GetObjectKey(filepath), "") {
+		return false, errors.New("Key not found")
+	}
+
+	// it's directory
+	if  0 == s.GetObjectSize(filepath) && 1 == len(strings.Split(filepath, ".")) {
+		return true, nil
+	}
+
+	// TODO: put directory into object metadata
+	return false, nil
+}
+
 func (ctrl *FileController) GetFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	filepath := ps.ByName("filepath")
-	log.Infof("GetFile, filepath: %s", filepath)
-	file, err := ctrl.Storage.ReadFile(filepath)
+	// TODO: get or list will be determinded by filepath
+	directory, err :=  check(ctrl.Storage, filepath)
+	log.Infof("directory=%v, err=%s", directory, err)
 	if err != nil {
-		w.WriteHeader(404)
-		fmt.Fprint(w, "Error during file opening, %s", err.Error())
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Error during file opening, %s", err.Error())
+		log.Errorf("check error: %s", err)
 		return
 	}
-	defer file.Close()
+
+	if directory {
+		log.Infof("GetFile, list directory filepath: %s", filepath)
+		objects, err := ctrl.Storage.ListDirectory(filepath)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error during directory opening , %s", err.Error())
+			log.Errorf("list directory error: %s", err)
+			return
+		}
+
+		data, err := json.Marshal(objects)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "Error during directory opening , %s", err.Error())
+			log.Errorf("list directory json marshal error: %s", err)
+			return
+		}
+
+		w.Write(data)
+		log.Infof("directory %s listed! data=%s", filepath, string(data))
+	} else {
+		log.Infof("GetFile, read file filepath: %s", filepath)
+		file, err := ctrl.Storage.ReadFile(filepath)
+		defer file.Close()
+
+		if err != nil {
+			w.WriteHeader(404)
+			fmt.Fprintf(w, "Error during file opening, %s", err.Error())
+			log.Errorf("read file error: %s", err)
+			return
+		}
+
+		content, err := ioutil.ReadAll(file)
+		fileNames := url.QueryEscape(filepath) // In case of Chinese wrong code
+		w.Header().Add("Content-Type", "application/octet-stream")
+		segs := strings.Split(fileNames, "/")
+		downloadFileName := segs[len(segs)-1]
+		w.Header().Add("Content-Disposition", "attachment; filename=\""+downloadFileName+"\"")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Errorf("read file server error: %s", err)
+			return
+		}
+
+		w.Write(content)
+		log.Infof("file %s downloaded!", downloadFileName)
+	}
+
+	/*
+
+
+	 */
 
 	/*
 	_, err = io.Copy(w, file)
@@ -41,20 +117,7 @@ func (ctrl *FileController) GetFile(w http.ResponseWriter, r *http.Request, ps h
 	}
 	 */
 
-	content, err := ioutil.ReadAll(file)
-	fileNames := url.QueryEscape(filepath) // In case of Chinese wrong code
-	w.Header().Add("Content-Type", "application/octet-stream")
-	segs := strings.Split(fileNames, "/")
-	downloadFileName := segs[len(segs)-1]
-	w.Header().Add("Content-Disposition", "attachment; filename=\""+downloadFileName+"\"")
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Errorf("server error: %s", err)
-		return
-	}
 
-	w.Write(content)
-	log.Infof("file %s downloaded!", downloadFileName)
 }
 
 func (ctrl *FileController) PutFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -69,3 +132,11 @@ func (ctrl *FileController) PutFile(w http.ResponseWriter, r *http.Request, ps h
 	}
 	w.WriteHeader(200)
 }
+
+/*
+func (ctrl *FileController)ListDirectory(w http.ResponseWriter, r *http.Request, ps httprouter.Params)  {
+	path := ps.ByName("filepath")
+	// TODO: need to check if it is a directory
+	err := ctrl.Storage.ListDirectory(path)
+}
+ */

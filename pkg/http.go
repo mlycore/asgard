@@ -23,9 +23,12 @@ func BasicAuth(h httprouter.Handle, config HttpConfig) httprouter.Handle {
 func InitHttp(config HttpConfig, controller *FileController) {
 	router := httprouter.New()
 	router.GET("/*filepath", BasicAuth(controller.GetFile, config))
-	router.PUT("/*filepath", BasicAuth(controller.PutFile, config))
+	router.POST("/*filepath", BasicAuth(controller.PutFile, config))
+	// TODO: add list and delete, even search with name or tags / properties
+	// router.GET("/*")
+	// router.DELETE("/)
 
-	log.Infof("Start http server on %s", config.Address)
+	log.Infof("Asgard start http server on %s", config.Address)
 	if config.HTTPS {
 		log.Fatal(http.ListenAndServeTLS(config.Address, config.Certificate, config.Key, router))
 		return
