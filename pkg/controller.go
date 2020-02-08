@@ -151,3 +151,42 @@ func (ctrl *FileController) DeleteFile(w http.ResponseWriter, r *http.Request, p
 	}
 	w.WriteHeader(200)
 }
+
+type CopyParam struct {
+	Src string `json:"src"`
+	Dist string `json:"dist"`
+	Recursive bool `json:"recursive"`
+}
+
+func (ctrl *FileController) CopyFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	filepath := ps.ByName("filepath")
+	log.Infof("CopyFile, filepath: %s\n", filepath)
+
+	param := &CopyParam{}
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Error during file copying: %s", err.Error())
+		w.WriteHeader(500)
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+	err = json.Unmarshal(data, &param)
+	if err != nil {
+		log.Errorf("Error during file copying: %s", err.Error())
+		w.WriteHeader(500)
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+	log.Infof("copy params: %+v", param)
+
+	param.Src = filepath
+
+	err = ctrl.Storage.Copy(param.Src, param.Dist, param.Recursive)
+	if err != nil {
+		log.Errorf("Error during file copying: %s", err.Error())
+		w.WriteHeader(500)
+		fmt.Fprintf(w, err.Error())
+		return
+	}
+	w.WriteHeader(200)
+}

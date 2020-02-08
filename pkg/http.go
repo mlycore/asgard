@@ -25,6 +25,7 @@ func InitHttp(config HttpConfig, controller *FileController) {
 	router.GET("/*filepath", BasicAuth(controller.GetFile, config))
 	router.POST("/*filepath", BasicAuth(controller.PutFile, config))
 	router.DELETE("/*filepath", BasicAuth(controller.DeleteFile, config))
+	router.PUT("/*filepath", BasicAuth(controller.CopyFile, config))
 	// router.GET("/healthz", controller.Healthz)
 	// TODO: add list and delete, even search with name or tags / properties
 	// router.GET("/*")
