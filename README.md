@@ -68,6 +68,7 @@ storage:
 ```
 # raw content
 curl --user myuser:mypassword localhost:8080/dir/foo.json
+curl --user myuser:mypassword localhost:8080/dir/
 
 # file download
 curl --user myuser:mypassword localhost:8080/dir/foo.json -o foo.json
@@ -75,11 +76,28 @@ curl --user myuser:mypassword localhost:8080/dir/foo.json -o foo.json
 wget --user myuser --password mypassword localhost:8080/dir/foo.json
 ```
 
+Files in this directory will be listed if path refers to a directory.
+
 ### Upload
 
 ```
-curl --user myuser:mypassword --upload-file foo.json localhost:8080/dir/foo.json
+curl --XPOST --user myuser:mypassword --upload-file foo.json localhost:8080/dir/foo.json
 ```
+
+### Copy
+
+```
+curl --XPUT --user myuser:mypassword -d "{\"dist\":\"newdir\/foo.json\", \"recursive\": false}" localhost:8080/dir/foo.json
+curl --XPUT --user myuser:mypassword -d "{\"dist\":\"newdir\/\", \"recursive\": true}" localhost:8080/dir/
+```
+
+### Delete
+
+```
+curl --XDELETE --user myuser:mypassword localhost:8080/dir/foo.json
+curl --XDELETE --user myuser:mypassword localhost:8080/dir/
+```
+
 
 ## License
 
