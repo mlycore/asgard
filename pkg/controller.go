@@ -31,7 +31,7 @@ func check(s Storage, filepath string) (bool, error) {
 	// 3. single file with key of this filepath but size 0 and no suffix of .7z ?
 	// 4. single file end up with /
 
-	// using principle 3
+	// using principle 4
 	if strings.EqualFold(s.GetObjectKey(filepath), "") {
 		return false, errors.New("Key not found")
 	}
@@ -57,6 +57,8 @@ func (ctrl *FileController) GetFile(w http.ResponseWriter, r *http.Request, ps h
 		fmt.Fprintf(w, "liveness get %d goroutines", runtime.NumGoroutine())
 		return
 	}
+
+	filepath = strings.TrimPrefix(filepath, "/")
 
 	// get or list will be determinded by filepath
 	directory, err := check(ctrl.Storage, filepath)
@@ -141,6 +143,7 @@ func (ctrl *FileController) PutFile(w http.ResponseWriter, r *http.Request, ps h
 
 func (ctrl *FileController) DeleteFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	filepath := ps.ByName("filepath")
+	filepath = strings.TrimPrefix(filepath, "/")
 	log.Infof("DeleteFile, filepath: %s\n", filepath)
 	err := ctrl.Storage.DeleteFile(filepath)
 	if err != nil {
@@ -161,6 +164,7 @@ type CopyParam struct {
 func (ctrl *FileController) CopyFile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	filepath := ps.ByName("filepath")
 	log.Infof("CopyFile, filepath: %s\n", filepath)
+	filepath = strings.TrimPrefix(filepath, "/")
 
 	param := &CopyParam{}
 	data, err := ioutil.ReadAll(r.Body)

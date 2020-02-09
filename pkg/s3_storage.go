@@ -44,33 +44,39 @@ func NewS3Storage(config StorageConfig) *S3Storage {
 	}
 }
 
-func (s *S3Storage) ReadFile(path string) (io.ReadCloser, error) {
+func readFile(client *s3.S3, bucket, path string) (*s3.GetObjectOutput, error) {
 	ctx := context.Background()
-	result, err := s.S3Client.GetObjectWithContext(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(s.Config.BucketName),
+	return client.GetObjectWithContext(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(bucket),
 		Key:    aws.String(path),
 	})
+}
+
+func (s *S3Storage) ReadFile(path string) (io.ReadCloser, error) {
+	result, err := readFile(s.S3Client, s.Config.BucketName, path)
 	if err != nil {
 		return nil, err
 	}
 	return result.Body, nil
 }
 
-func (s *S3Storage) WriteFile(path string, file io.ReadCloser) error {
+func writeFile(uploader *s3manager.Uploader, bucket, path string, file io.ReadCloser) error  {
 	upParams := &s3manager.UploadInput{
-		Bucket: aws.String(s.Config.BucketName),
+		Bucket: aws.String(bucket),
 		Key:    aws.String(path),
 		Body:   file,
 	}
 
-	_, err := s.S3Uploader.Upload(upParams)
+	_, err := uploader.Upload(upParams)
 	return err
 }
 
-var _ Object = &S3Object{}
+func (s *S3Storage) WriteFile(path string, file io.ReadCloser) error {
+	return writeFile(s.S3Uploader, s.Config.BucketName, path, file)
+}
 
+var _ Object = &S3Object{}
 type S3Object struct {
-	// object *s3.Object
 	Key          *string    `json:"key,omitempty"`
 	LastModified *time.Time `json:"lastModified,omitempty"`
 	Size         *int64     `json:"size,omitempty"`
@@ -92,7 +98,7 @@ func (obj *S3Object) GetSize() int64 {
 func (s *S3Storage) ListDirectory(path string) ([]Object, error) {
 	params := &s3.ListObjectsInput{
 		Bucket: aws.String(s.Config.BucketName),
-		Prefix: aws.String(strings.TrimPrefix(path, "/")),
+		Prefix: aws.String(path),
 	}
 
 	result, err := s.S3Client.ListObjects(params)
@@ -102,7 +108,7 @@ func (s *S3Storage) ListDirectory(path string) ([]Object, error) {
 
 	list := make([]Object, len(result.Contents))
 	for i := 0; i < len(result.Contents); i++ {
-		realkey := strings.TrimPrefix(aws.StringValue(result.Contents[i].Key), strings.TrimPrefix(path, "/"))
+		realkey := strings.TrimPrefix(aws.StringValue(result.Contents[i].Key), path)
 		if strings.EqualFold(realkey, "") {
 			realkey = "."
 		}
@@ -151,11 +157,62 @@ func (s *S3Storage) GetObjectKey(key string) string {
 }
 
 func (s *S3Storage)DeleteFile(file string) error {
+	var recursive bool
+	// judge if it is a directory
+	if strings.EqualFold(s.GetObjectKey(file), "") {
+		return errors.New("Key not found")
+	}
+
+	if strings.HasSuffix(file, "/") {
+		recursive = true
+	}
+
+	if recursive {
+		logrus.Infof("file: %s", file)
+		objlist, err := s.ListDirectory(file)
+		if err != nil {
+			return err
+		}
+
+		for _, obj := range objlist {
+			path := obj.GetKey()
+			if strings.EqualFold(path, ".") {
+				continue
+			}
+			logrus.Infof("directory file path: %s", path)
+			// delete files in directory
+			err = deleteFile(s.S3Client, s.Config.BucketName, fmt.Sprintf("%s%s", file, path))
+			if err != nil {
+				logrus.Errorf("directory file deletefile error: err=%s, key=%s", err, fmt.Sprintf("%s%s", file, path))
+				return err
+			}
+			logrus.Errorf("directory file %s deleted", fmt.Sprintf("%s%s", file, path))
+		}
+		// delete directory itself
+		err = deleteFile(s.S3Client, s.Config.BucketName, file)
+		if err != nil {
+			logrus.Errorf("directory file deletefile error: err=%s, key=%s", err, file)
+			return err
+		}
+
+	} else {
+		// readfile
+		err := deleteFile(s.S3Client, s.Config.BucketName, file)
+		if err != nil {
+			logrus.Errorf("single file readfile error: err=%s", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func deleteFile(client *s3.S3, bucket, file string) error {
 	params := &s3.DeleteObjectInput{
-		Bucket: aws.String( s.Config.BucketName),
+		Bucket: aws.String(bucket),
 		Key:    aws.String(file),
 	}
-	_, err := s.S3Client.DeleteObject(params)
+	_, err := client.DeleteObject(params)
 	return err
 }
 
@@ -170,6 +227,18 @@ func (s *S3Storage)Copy(src, dst string, recursive bool) error {
 	}
 
 	if recursive {
+		// check if dst directory existed
+		if strings.EqualFold(s.GetObjectKey(dst), "") && strings.HasSuffix(dst, "/") {
+			result, err := readFile(s.S3Client, s.Config.BucketName, src)
+			if err != nil {
+				logrus.Errorf("read file error=%s", err)
+			}
+			if err := writeFile(s.S3Uploader, s.Config.BucketName, dst, result.Body); err != nil {
+				logrus.Errorf("write file error=%s", err)
+			}
+			logrus.Infof("new directory %s created", dst)
+		}
+
 		logrus.Infof("src: %s", src)
 		filelist, err := s.ListDirectory(src)
 		if err != nil {
@@ -183,50 +252,30 @@ func (s *S3Storage)Copy(src, dst string, recursive bool) error {
 			}
 			logrus.Infof("directory file path: %s", path)
 			// readfile
-			ctx := context.Background()
-			result, err := s.S3Client.GetObjectWithContext(ctx, &s3.GetObjectInput{
-				Bucket: aws.String(s.Config.BucketName),
-				Key:    aws.String(fmt.Sprintf("%s%s", src, path)),
-			})
+			result, err := readFile(s.S3Client, s.Config.BucketName, fmt.Sprintf("%s%s", src, path))
 			if err != nil {
-				logrus.Errorf("directory file readfile error: err=%s, key=%s", err, fmt.Sprintf("%s/%s", src, path))
+				logrus.Errorf("directory file readfile error: err=%s, key=%s", err, fmt.Sprintf("%s%s", src, path))
 				return err
 			}
 
 			// changepath and writefile
-			upParams := &s3manager.UploadInput{
-				Bucket: aws.String(s.Config.BucketName),
-				Key:    aws.String(fmt.Sprintf("%s%s", dst, path)),
-				Body:   result.Body,
-			}
-
-			_, err = s.S3Uploader.Upload(upParams)
+			err = writeFile(s.S3Uploader, s.Config.BucketName, fmt.Sprintf("%s%s", dst, path), result.Body)
 			if err != nil {
-				logrus.Errorf("directory file writefile error: err=%s, key=%s", err, fmt.Sprintf("%s/%s", dst, path))
+				logrus.Errorf("directory file writefile error: err=%s, key=%s", err, fmt.Sprintf("%s%s", dst, path))
 				return err
 			}
 		}
 
 	} else {
 		// readfile
-		ctx := context.Background()
-		result, err := s.S3Client.GetObjectWithContext(ctx, &s3.GetObjectInput{
-			Bucket: aws.String(s.Config.BucketName),
-			Key:    aws.String(src),
-		})
+		result, err := readFile(s.S3Client, s.Config.BucketName, src)
 		if err != nil {
 			logrus.Errorf("single file readfile error: err=%s", err)
 			return err
 		}
 
 		// changepath and writefile
-		upParams := &s3manager.UploadInput{
-			Bucket: aws.String(s.Config.BucketName),
-			Key:    aws.String(dst),
-			Body:   result.Body,
-		}
-
-		_, err = s.S3Uploader.Upload(upParams)
+		err = writeFile(s.S3Uploader, s.Config.BucketName, dst, result.Body)
 		if err != nil {
 			logrus.Errorf("single file writefile error: err=%s", err)
 			return err
