@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -31,10 +30,11 @@ func check(s Storage, filepath string) (bool, error) {
 	// 3. single file with key of this filepath but size 0 and no suffix of .7z ?
 	// 4. single file end up with /
 
-	// using principle 4
+	/*
 	if strings.EqualFold(s.GetObjectKey(filepath), "") {
 		return false, errors.New("Key not found")
 	}
+	 */
 
 	// it's directory
 	/*
@@ -42,6 +42,7 @@ func check(s Storage, filepath string) (bool, error) {
 			return true, nil
 		}
 	*/
+	// using principle 4
 	if strings.HasSuffix(filepath, "/") {
 		return true, nil
 	}

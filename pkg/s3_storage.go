@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
 	"io"
@@ -110,7 +109,8 @@ func (s *S3Storage) ListDirectory(path string) ([]Object, error) {
 	for i := 0; i < len(result.Contents); i++ {
 		realkey := strings.TrimPrefix(aws.StringValue(result.Contents[i].Key), path)
 		if strings.EqualFold(realkey, "") {
-			realkey = "."
+			// realkey = "."
+			continue
 		}
 		/*
 			if strings.EqualFold(strings.Trim(aws.StringValue(result.Contents[i].Key), "/"), strings.Trim(path, "/")) {
@@ -159,9 +159,11 @@ func (s *S3Storage) GetObjectKey(key string) string {
 func (s *S3Storage)DeleteFile(file string) error {
 	var recursive bool
 	// judge if it is a directory
+	/*
 	if strings.EqualFold(s.GetObjectKey(file), "") {
 		return errors.New("Key not found")
 	}
+	 */
 
 	if strings.HasSuffix(file, "/") {
 		recursive = true
@@ -189,11 +191,13 @@ func (s *S3Storage)DeleteFile(file string) error {
 			logrus.Errorf("directory file %s deleted", fmt.Sprintf("%s%s", file, path))
 		}
 		// delete directory itself
+		/*
 		err = deleteFile(s.S3Client, s.Config.BucketName, file)
 		if err != nil {
 			logrus.Errorf("directory file deletefile error: err=%s, key=%s", err, file)
 			return err
 		}
+		 */
 
 	} else {
 		// readfile
@@ -218,9 +222,11 @@ func deleteFile(client *s3.S3, bucket, file string) error {
 
 func (s *S3Storage)Copy(src, dst string, recursive bool) error {
 	// judge if it is a directory
+	/*
 	if strings.EqualFold(s.GetObjectKey(src), "") {
 		return errors.New("Key not found")
 	}
+	 */
 
 	if strings.HasSuffix(src, "/") {
 		recursive = true
@@ -228,6 +234,7 @@ func (s *S3Storage)Copy(src, dst string, recursive bool) error {
 
 	if recursive {
 		// check if dst directory existed
+		/*
 		if strings.EqualFold(s.GetObjectKey(dst), "") && strings.HasSuffix(dst, "/") {
 			result, err := readFile(s.S3Client, s.Config.BucketName, src)
 			if err != nil {
@@ -238,6 +245,7 @@ func (s *S3Storage)Copy(src, dst string, recursive bool) error {
 			}
 			logrus.Infof("new directory %s created", dst)
 		}
+		 */
 
 		logrus.Infof("src: %s", src)
 		filelist, err := s.ListDirectory(src)
