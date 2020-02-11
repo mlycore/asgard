@@ -158,6 +158,7 @@ func (ctrl *FileController) DeleteFile(w http.ResponseWriter, r *http.Request, p
 
 type CopyParam struct {
 	Src string `json:"src"`
+	TargetRepo string `json:"targetRepo"`
 	Dist string `json:"dist"`
 	Recursive bool `json:"recursive"`
 }
@@ -186,7 +187,7 @@ func (ctrl *FileController) CopyFile(w http.ResponseWriter, r *http.Request, ps 
 
 	param.Src = filepath
 
-	err = ctrl.Storage.Copy(param.Src, param.Dist, param.Recursive)
+	err = ctrl.Storage.Copy(param.TargetBucket, param.Src, param.Dist, param.Recursive)
 	if err != nil {
 		log.Errorf("Error during file copying: %s", err.Error())
 		w.WriteHeader(500)

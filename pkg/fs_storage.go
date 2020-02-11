@@ -51,7 +51,7 @@ func (fs *FileSystemStorage)DeleteFile(file string) error  {
 	return nil	
 }
 
-func (fs *FileSystemStorage)Copy(src, dst string, recursive bool)  error {
+func (fs *FileSystemStorage)Copy(repo, src, dst string, recursive bool)  error {
 	return nil
 }
 

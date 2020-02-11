@@ -220,13 +220,17 @@ func deleteFile(client *s3.S3, bucket, file string) error {
 	return err
 }
 
-func (s *S3Storage)Copy(src, dst string, recursive bool) error {
+func (s *S3Storage)Copy(repo, src, dst string, recursive bool) error {
 	// judge if it is a directory
 	/*
 	if strings.EqualFold(s.GetObjectKey(src), "") {
 		return errors.New("Key not found")
 	}
 	 */
+
+	if strings.EqualFold(repo, "") {
+		repo = s.Config.BucketName
+	}
 
 	if strings.HasSuffix(src, "/") {
 		recursive = true
@@ -267,7 +271,7 @@ func (s *S3Storage)Copy(src, dst string, recursive bool) error {
 			}
 
 			// changepath and writefile
-			err = writeFile(s.S3Uploader, s.Config.BucketName, fmt.Sprintf("%s%s", dst, path), result.Body)
+			err = writeFile(s.S3Uploader, repo, fmt.Sprintf("%s%s", dst, path), result.Body)
 			if err != nil {
 				logrus.Errorf("directory file writefile error: err=%s, key=%s", err, fmt.Sprintf("%s%s", dst, path))
 				return err
@@ -283,7 +287,7 @@ func (s *S3Storage)Copy(src, dst string, recursive bool) error {
 		}
 
 		// changepath and writefile
-		err = writeFile(s.S3Uploader, s.Config.BucketName, dst, result.Body)
+		err = writeFile(s.S3Uploader, repo, dst, result.Body)
 		if err != nil {
 			logrus.Errorf("single file writefile error: err=%s", err)
 			return err

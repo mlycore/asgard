@@ -12,7 +12,7 @@ type Storage interface {
 	GetObjectSize(path string) int64
 	GetObjectKey(path string) string
 	DeleteFile(path string) error
-	Copy(src, dst string, recursive bool) error
+	Copy(repo, src, dst string, recursive bool) error
 }
 
 type StorageType string
